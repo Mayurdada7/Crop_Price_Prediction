@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crop Price Prediction</title>
+    <style>
+        .center-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            flex-direction: column;
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        #priceForm {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 100%;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #result {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 18px;
+            color: #333;
+        }
+    </style>
+</head>
+<body class="center-container">
+    <h1>AGRISURE</h1>
+    <h2>Crop Price Prediction Form</h2>
+    <form id="priceForm">
+        <label for="crop_type">Crop Type:</label><br>
+        <select id="crop_type" name="crop_type" required>
+            <option value="Wheat">Wheat</option>
+            <option value="Barley">Barley</option>
+            <option value="Rice">Rice</option>
+            <option value="Soyabean">Soyabean</option>
+            <option value="Sugarcane">Sugarcane</option>
+            <option value="Cotton">Cotton</option>
+            <option value="Bajra">Bajra</option>
+            <option value="Pulses">Pulses</option>
+        </select><br><br>
+
+        <label for="city">City:</label><br>
+        <select id="city" name="city" required>
+            <option value="Pune">Pune</option>
+            <option value="Mumbai">Mumbai</option>
+            <option value="Nashik">Nashik</option>
+            <option value="Konkan">Konkan</option>
+            <option value="Kolhapur">Kolhapur</option>
+            <option value="Nagpur">Nagpur</option>
+        </select><br><br>
+
+        <label for="season">Season:</label><br>
+        <select id="season" name="season" required>
+            <option value="Winter">Winter</option>
+            <option value="Summer">Summer</option>
+            <option value="Monsoon">Monsoon</option>
+        </select><br><br>
+
+        <button type="button" onclick="submitForm()">Predict</button>
+    </form>
+
+    <p id="result"></p>
+
+    <script>
+        async function getCurrentTemperature(city) {
+            const apiKey = '39fb99b59c66ea1c1e87e575c4b6a717'; // Replace with your OpenWeather API key
+            const apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${apiKey}`;
+            try {
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+                if (response.ok) {
+                    return data.main.temp; // Temperature in Celsius
+                } else {
+                    console.error('Error fetching weather data:', data.message);
+                    return null;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                return null;
+            }
+        }
+
+        async function submitForm() {
+            const crop_type = document.getElementById('crop_type').value;
+            const city = document.getElementById('city').value;
+            const season = document.getElementById('season').value;
+
+            // Fetch current temperature for the selected city
+            const temperature = await getCurrentTemperature(city);
+
+            if (temperature !== null) {
+                const data = {
+                    crop_type: crop_type,
+                    city: city,
+                    season: season,
+                    temperature: temperature
+                };
+
+                fetch('http://127.0.0.1:5000/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('result').textContent = "Predicted Price: " + data.predicted_price;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            } else {
+                document.getElementById('result').textContent = "Error fetching temperature.";
+            }
+        }
+    </script>
+</body>
+</html>
